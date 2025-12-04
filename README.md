@@ -3,15 +3,18 @@ Modern web calculator with beautiful glassmorphism design. Single HTML file fron
 
 🚀 Quick Start
 Backend Setup
+
 bash
 pip install flask flask-cors
 python app.py
 # Server runs at http://localhost:5000
+
 Frontend Setup
 Open index.html in browser or use:
 
 bash
 python -m http.server 8000
+
 ✨ Key Features
 Frontend (Single HTML file)
 Beautiful UI: Glassmorphism design with gradient backgrounds
