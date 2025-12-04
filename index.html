@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Smart Calculator</title>
+
+<!-- Google Font -->
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet" />
+
+<style>
+/* ------------------------------------------------------
+   GLOBAL STYLING
+------------------------------------------------------ */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "Poppins", sans-serif;
+    background: linear-gradient(135deg, #0a0f24, #1b2347);
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    overflow: hidden;
+}
+
+/* Accessibility - Skip to main content */
+.skip-to-main {
+    position: absolute;
+    left: -9999px;
+    top: auto;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+}
+
+.skip-to-main:focus {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    width: auto;
+    height: auto;
+    padding: 10px;
+    background: #ffbd0a;
+    color: #000;
+    z-index: 1000;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+/* ------------------------------------------------------
+   CALCULATOR WRAPPER - REDUCED VERTICAL SIZE
+------------------------------------------------------ */
+.calculator-container {
+    width: 380px;
+    padding: 20px 25px; /* Reduced vertical padding from 25px to 20px */
+    border-radius: 20px;
+    backdrop-filter: blur(15px);
+    background: rgba(255, 255, 255, 0.07);
+    box-shadow: 0 4px 35px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* ------------------------------------------------------
+   HEADER + THEME TOGGLE
+------------------------------------------------------ */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px; /* Reduced from 20px */
+}
+
+.header h2 {
+    font-weight: 600;
+    letter-spacing: 1px;
+    font-size: 1.4rem; /* Slightly smaller */
+}
+
+.theme-switch {
+    cursor: pointer;
+    font-size: 18px; /* Reduced from 20px */
+    user-select: none;
+    padding: 4px 8px; /* Reduced from 5px 10px */
+    transition: transform 0.2s ease;
+}
+
+.theme-switch:active {
+    transform: scale(0.9);
+}
+
+/* ------------------------------------------------------
+   DISPLAY AREA - COMPACT
+------------------------------------------------------ */
+.display-container {
+    position: relative;
+    margin-bottom: 15px; /* Reduced from 20px */
+}
+
+.expression-preview {
+    font-size: 13px; /* Reduced from 14px */
+    color: rgba(255, 255, 255, 0.7);
+    text-align: right;
+    margin-bottom: 4px; /* Reduced from 5px */
+    min-height: 18px; /* Reduced from 20px */
+    overflow: hidden;
+    padding: 0 5px;
+}
+
+.display {
+    width: 100%;
+    height: 70px; /* Reduced from 80px */
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px; /* Reduced from 15px */
+    padding: 12px 15px; /* Reduced from 15px */
+    font-size: 26px; /* Reduced from 28px */
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    color: #fff;
+    overflow-x: auto;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.display:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.display:hover::after {
+    content: "📋 Click to copy";
+    position: absolute;
+    right: 10px;
+    font-size: 11px; /* Reduced from 12px */
+    opacity: 0.7;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 2px 5px; /* Reduced from 2px 6px */
+    border-radius: 4px;
+}
+
+/* ------------------------------------------------------
+   BUTTON GRID - COMPACT
+------------------------------------------------------ */
+.buttons {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px; /* Reduced from 12px */
+}
+
+button {
+    padding: 14px 16px; /* Reduced from 18px */
+    border-radius: 10px; /* Reduced from 12px */
+    font-size: 16px; /* Reduced from 18px */
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    position: relative;
+}
+
+button:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+button:active {
+    transform: scale(0.95);
+}
+
+button:focus {
+    outline: 2px solid #ffbd0a;
+    outline-offset: 2px;
+}
+
+/* Operator Buttons */
+.operator {
+    background: rgba(21, 125, 230, 0.3);
+}
+
+.operator:hover {
+    background: rgba(21, 125, 230, 0.4);
+}
+
+/* Equals Button */
+.equals {
+    background: linear-gradient(45deg, #09db88, #06a16d);
+    color: #111;
+    grid-column: span 2;
+}
+
+.equals:hover {
+    background: linear-gradient(45deg, #0af09c, #0bbe7f);
+}
+
+/* Clear Buttons */
+.clear {
+    background: rgba(255, 40, 40, 0.3);
+}
+
+.clear:hover {
+    background: rgba(255, 40, 40, 0.4);
+}
+
+/* ------------------------------------------------------
+   HISTORY PANEL - COMPACT
+------------------------------------------------------ */
+.history-container {
+    margin-bottom: 15px; /* Reduced from 20px */
+    overflow: hidden;
+    border-radius: 12px; /* Reduced from 15px */
+    background: rgba(20, 20, 20, 0.8);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px; /* Reduced from 15px 20px */
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.history-header h3 {
+    font-weight: 600;
+    margin: 0;
+    font-size: 1rem; /* Added for consistency */
+}
+
+.history-toggle {
+    width: 36px; /* Reduced from 40px */
+    height: 36px; /* Reduced from 40px */
+    background: #ffbd0a;
+    color: #000;
+    border-radius: 10px; /* Reduced from 12px */
+    font-size: 18px; /* Reduced from 20px */
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.3s ease;
+}
+
+.history-toggle:hover {
+    background: #ffc940;
+    transform: scale(1.05);
+}
+
+.history-box {
+    max-height: 0;
+    overflow-y: auto;
+    transition: max-height 0.4s ease-out;
+    padding: 0 16px; /* Reduced from 0 20px */
+}
+
+.history-box.show-history {
+    max-height: 250px; /* Reduced from 300px */
+    padding: 16px; /* Reduced from 20px */
+}
+
+.history-item {
+    padding: 8px; /* Reduced from 10px 8px */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    margin-bottom: 8px; /* Reduced from 10px */
+    font-size: 13px; /* Reduced from 14px */
+    cursor: pointer;
+    border-radius: 5px; /* Reduced from 6px */
+    transition: background 0.2s ease;
+}
+
+.history-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.history-timestamp {
+    font-size: 10px; /* Reduced from 11px */
+    color: rgba(255, 255, 255, 0.6);
+    margin-bottom: 2px; /* Reduced from 3px */
+    display: block;
+}
+
+.history-buttons {
+    display: flex;
+    gap: 8px; /* Reduced from 10px */
+    margin-bottom: 12px; /* Reduced from 15px */
+}
+
+.history-action-btn {
+    flex: 1;
+    padding: 8px; /* Reduced from 10px */
+    border-radius: 8px; /* Reduced from 10px */
+    font-size: 13px; /* Reduced from 14px */
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.export-btn {
+    background: rgba(32, 201, 151, 0.4);
+}
+
+.export-btn:hover {
+    background: rgba(32, 201, 151, 0.6);
+}
+
+.clear-history-btn {
+    background: rgba(255, 50, 50, 0.4);
+}
+
+.clear-history-btn:hover {
+    background: rgba(255, 50, 50, 0.6);
+}
+
+/* ------------------------------------------------------
+   ANIMATIONS & FEEDBACK
+------------------------------------------------------ */
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+    20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+@keyframes loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+.error-shake {
+    animation: shake 0.5s ease-in-out;
+    background: rgba(255, 50, 50, 0.3) !important;
+}
+
+.success-pulse {
+    animation: pulse 0.3s ease-in-out;
+}
+
+.loading {
+    background: linear-gradient(90deg, 
+        rgba(255,255,255,0.1) 25%, 
+        rgba(255,255,255,0.2) 50%, 
+        rgba(255,255,255,0.1) 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+}
+
+/* ------------------------------------------------------
+   DARK MODE
+------------------------------------------------------ */
+body.dark {
+    background: linear-gradient(135deg, #191919, #0c0c0c);
+}
+
+body.dark .calculator-container {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+body.dark .history-container {
+    background: rgba(0, 0, 0, 0.7);
+}
+
+/* ------------------------------------------------------
+   RESPONSIVE DESIGN
+------------------------------------------------------ */
+@media (max-width: 480px) {
+    .calculator-container {
+        width: 95%;
+        max-width: 380px;
+        padding: 15px; /* Already reduced */
+        margin: 10px;
+    }
+    
+    .buttons {
+        gap: 8px; /* Reduced from original 12px */
+    }
+    
+    button {
+        padding: 12px 14px; /* Adjusted from 15px */
+        font-size: 15px; /* Reduced from 16px */
+    }
+    
+    .display {
+        height: 65px; /* Reduced from 70px */
+        font-size: 24px;
+    }
+    
+    .history-box.show-history {
+        max-height: 220px; /* Reduced from 250px */
+    }
+}
+
+@media (max-width: 360px) {
+    .buttons {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
+    }
+    
+    button {
+        padding: 10px; /* Reduced from 12px */
+        font-size: 14px; /* Reduced from 15px */
+    }
+    
+    .calculator-container {
+        padding: 12px; /* Further reduced for small screens */
+    }
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- Accessibility Skip Link -->
+<a href="#calculator" class="skip-to-main">Skip to calculator</a>
+
+<div class="calculator-container" id="calculator">
+
+    <!-- HISTORY CONTAINER - MODIFIED FOR SLIDE DOWN/UP -->
+    <div class="history-container">
+        <div class="history-header" onclick="toggleHistory()">
+            <h3>History</h3>
+            <div class="history-toggle" id="historyToggle">▼</div>
+        </div>
+        
+        <div class="history-box" id="historyBox">
+            <div class="history-buttons">
+                <button class="history-action-btn export-btn" onclick="exportHistory()" aria-label="Export history">Export</button>
+                <button class="history-action-btn clear-history-btn" onclick="clearHistory()" aria-label="Clear history">Clear</button>
+            </div>
+            <div id="historyList"></div>
+        </div>
+    </div>
+
+    <!-- HEADER -->
+    <div class="header">
+        <h2>Smart Calculator</h2>
+        <div class="theme-switch" id="themeToggle" aria-label="Toggle theme">🌙</div>
+    </div>
+
+    <!-- DISPLAY WITH PREVIEW -->
+    <div class="display-container">
+        <div class="expression-preview" id="expressionPreview"></div>
+        <div class="display" id="display" onclick="copyResult()" aria-label="Display. Click to copy result">0</div>
+    </div>
+
+    <!-- BUTTONS -->
+    <div class="buttons">
+        <button class="clear" onclick="clearDisplay()" aria-label="Clear">C</button>
+        <button class="clear" onclick="deleteLast()" aria-label="Delete last character">DEL</button>
+        <button class="operator" onclick="append('%')" aria-label="Percentage">%</button>
+        <button class="operator" onclick="append('/')" aria-label="Divide">/</button>
+
+        <button onclick="append('7')" aria-label="Seven">7</button>
+        <button onclick="append('8')" aria-label="Eight">8</button>
+        <button onclick="append('9')" aria-label="Nine">9</button>
+        <button class="operator" onclick="append('*')" aria-label="Multiply">*</button>
+
+        <button onclick="append('4')" aria-label="Four">4</button>
+        <button onclick="append('5')" aria-label="Five">5</button>
+        <button onclick="append('6')" aria-label="Six">6</button>
+        <button class="operator" onclick="append('-')" aria-label="Subtract">-</button>
+
+        <button onclick="append('1')" aria-label="One">1</button>
+        <button onclick="append('2')" aria-label="Two">2</button>
+        <button onclick="append('3')" aria-label="Three">3</button>
+        <button class="operator" onclick="append('+')" aria-label="Add">+</button>
+
+        <button onclick="append('0')" aria-label="Zero">0</button>
+        <button onclick="append('.')" aria-label="Decimal point">.</button>
+        
+        <!-- NEW: Parentheses and Exponent Buttons -->
+        <button class="operator" onclick="append('(')" aria-label="Open parenthesis">(</button>
+        <button class="operator" onclick="append(')')" aria-label="Close parenthesis">)</button>
+        <button class="operator" onclick="append('^')" aria-label="Exponent">^</button>
+
+        <!-- ADVANCED FUNCTIONS -->
+        <button class="operator" onclick="append('sin(')" aria-label="Sine function">sin</button>
+        <button class="operator" onclick="append('cos(')" aria-label="Cosine function">cos</button>
+        <button class="operator" onclick="append('tan(')" aria-label="Tangent function">tan</button>
+        <button class="operator" onclick="append('sqrt(')" aria-label="Square root">√</button>
+        <button class="operator" onclick="append('log(')" aria-label="Logarithm base 10">log</button>
+        <button class="operator" onclick="append('ln(')" aria-label="Natural logarithm">ln</button>
+        <button class="operator" onclick="append('pi')" aria-label="Pi constant">π</button>
+        <button class="operator" onclick="append('e')" aria-label="Euler's number">e</button>
+
+        <!-- EQUALS -->
+        <button class="equals" onclick="calculate()" aria-label="Calculate">=</button>
+    </div>
+</div>
+
+<script>
+/* ------------------------------------------------------
+   DISPLAY UPDATE FUNCTIONS
+------------------------------------------------------ */
+const display = document.getElementById("display");
+const expressionPreview = document.getElementById("expressionPreview");
+let expression = "";
+
+/* Append characters */
+function append(value) {
+    if (expression === "0") expression = "";
+    expression += value;
+    display.textContent = expression;
+    expressionPreview.textContent = expression;
+}
+
+/* Clear display */
+function clearDisplay() {
+    expression = "";
+    display.textContent = "0";
+    expressionPreview.textContent = "";
+    display.classList.remove("error-shake", "success-pulse");
+}
+
+/* Delete last character */
+function deleteLast() {
+    expression = expression.slice(0, -1);
+    display.textContent = expression || "0";
+    expressionPreview.textContent = expression;
+}
+
+/* ------------------------------------------------------
+   KEYBOARD SUPPORT
+------------------------------------------------------ */
+document.addEventListener('keydown', function(event) {
+    const key = event.key;
+    
+    // Prevent default for keys we handle
+    if (['+', '-', '*', '/', 'Enter', 'Escape', 'Backspace', '%', '(', ')', '^'].includes(key)) {
+        event.preventDefault();
+    }
+    
+    if (key >= '0' && key <= '9') {
+        append(key);
+    } else if (key === '+') {
+        append('+');
+    } else if (key === '-') {
+        append('-');
+    } else if (key === '*') {
+        append('*');
+    } else if (key === '/') {
+        append('/');
+    } else if (key === '.') {
+        append('.');
+    } else if (key === 'Enter' || key === '=') {
+        calculate();
+    } else if (key === 'Escape' || key === 'Delete') {
+        clearDisplay();
+    } else if (key === 'Backspace') {
+        deleteLast();
+    } else if (key === '%') {
+        append('%');
+    } else if (key === '(') {
+        append('(');
+    } else if (key === ')') {
+        append(')');
+    } else if (key === '^') {
+        append('^');
+    } else if (key.toLowerCase() === 'p') {
+        append('pi');
+    } else if (key.toLowerCase() === 'e') {
+        append('e');
+    }
+});
+
+/* ------------------------------------------------------
+   ENHANCED CALCULATE FUNCTION WITH VALIDATION
+------------------------------------------------------ */
+async function calculate() {
+    if (!expression) return;
+    
+    // Remove any previous animation classes
+    display.classList.remove("error-shake", "success-pulse", "loading");
+    
+    // Basic validation
+    if (expression.includes('/0')) {
+        showError('Division by zero');
+        return;
+    }
+    
+    // Check for unbalanced parentheses
+    const open = (expression.match(/\(/g) || []).length;
+    const close = (expression.match(/\)/g) || []).length;
+    if (open !== close) {
+        showError('Unbalanced parentheses');
+        return;
+    }
+    
+    // Check for empty expression
+    if (expression.trim() === '') {
+        showError('Empty expression');
+        return;
+    }
+    
+    try {
+        // Show loading state
+        display.classList.add('loading');
+        
+        const res = await fetch("http://localhost:5000/api/evaluate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ expression })
+        });
+
+        const data = await res.json();
+
+        if (data.error) {
+            showError(data.error || 'Calculation error');
+        } else {
+            showSuccess(data.result);
+            addToHistory(expression, data.result);
+            expression = String(data.result);
+            expressionPreview.textContent = "";
+        }
+    } catch (err) {
+        showError('Server Error');
+        console.error('Fetch error:', err);
+    } finally {
+        display.classList.remove('loading');
+    }
+}
+
+function showError(message) {
+    display.textContent = message;
+    display.classList.add('error-shake');
+    setTimeout(() => {
+        if (display.classList.contains('error-shake')) {
+            display.classList.remove('error-shake');
+            display.textContent = expression || "0";
+        }
+    }, 1000);
+}
+
+function showSuccess(result) {
+    display.textContent = result;
+    display.classList.add('success-pulse');
+    setTimeout(() => display.classList.remove('success-pulse'), 300);
+}
+
+/* ------------------------------------------------------
+   COPY RESULT FEATURE
+------------------------------------------------------ */
+function copyResult() {
+    if (display.textContent && display.textContent !== "0" && !display.textContent.includes("Error")) {
+        navigator.clipboard.writeText(display.textContent).then(() => {
+            // Show temporary feedback
+            const original = display.textContent;
+            const originalColor = display.style.color;
+            display.textContent = "Copied!";
+            display.style.color = "#09db88";
+            
+            setTimeout(() => {
+                display.textContent = original;
+                display.style.color = originalColor;
+            }, 800);
+        }).catch(err => {
+            console.error('Copy failed:', err);
+            showError('Copy failed');
+        });
+    }
+}
+
+/* ------------------------------------------------------
+   ENHANCED HISTORY SYSTEM
+------------------------------------------------------ */
+const historyBox = document.getElementById("historyBox");
+const historyToggle = document.getElementById("historyToggle");
+const historyList = document.getElementById("historyList");
+let isHistoryVisible = false;
+
+// Load history from localStorage on page load
+window.onload = function() {
+    loadHistory();
+};
+
+// Toggle history visibility with slide down/up effect
+function toggleHistory() {
+    isHistoryVisible = !isHistoryVisible;
+    historyBox.classList.toggle("show-history");
+    
+    // Change toggle button icon
+    if (isHistoryVisible) {
+        historyToggle.textContent = "▲";
+        historyToggle.setAttribute("aria-label", "Hide history");
+    } else {
+        historyToggle.textContent = "▼";
+        historyToggle.setAttribute("aria-label", "Show history");
+    }
+}
+
+function addToHistory(expr, result) {
+    const div = document.createElement("div");
+    div.classList.add("history-item");
+    
+    const timestamp = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second: '2-digit'});
+    div.innerHTML = `
+        <span class="history-timestamp">${timestamp}</span>
+        ${expr} = <strong>${result}</strong>
+    `;
+    
+    // Click to reuse the result
+    div.onclick = function() {
+        expression = result;
+        display.textContent = expression;
+        expressionPreview.textContent = "";
+        showSuccess(result);
+    };
+    
+    // Add delete button for individual history items
+    const deleteBtn = document.createElement("span");
+    deleteBtn.innerHTML = " ×";
+    deleteBtn.style.cssText = "float: right; cursor: pointer; color: #ff5050; font-weight: bold; margin-left: 10px;";
+    deleteBtn.onclick = function(e) {
+        e.stopPropagation();
+        div.remove();
+        saveHistory();
+    };
+    div.appendChild(deleteBtn);
+    
+    historyList.prepend(div);
+    
+    // Auto-show history when new calculation is added
+    if (!isHistoryVisible) {
+        toggleHistory();
+    }
+    
+    // Save to localStorage
+    saveHistory();
+}
+
+// Save history to localStorage
+function saveHistory() {
+    const historyItems = [];
+    historyList.querySelectorAll('.history-item').forEach(item => {
+        historyItems.push(item.innerHTML);
+    });
+    localStorage.setItem('calculatorHistory', JSON.stringify(historyItems));
+}
+
+// Load history from localStorage
+function loadHistory() {
+    const savedHistory = localStorage.getItem('calculatorHistory');
+    if (savedHistory) {
+        try {
+            const historyItems = JSON.parse(savedHistory);
+            historyItems.reverse().forEach(item => {
+                const div = document.createElement("div");
+                div.classList.add("history-item");
+                div.innerHTML = item;
+                
+                // Restore click functionality
+                const strongElement = div.querySelector('strong');
+                if (strongElement) {
+                    div.onclick = function() {
+                        expression = strongElement.textContent;
+                        display.textContent = expression;
+                        expressionPreview.textContent = "";
+                        showSuccess(expression);
+                    };
+                }
+                
+                // Restore delete button functionality
+                const deleteBtn = div.querySelector('span[style*="float: right"]');
+                if (deleteBtn) {
+                    deleteBtn.onclick = function(e) {
+                        e.stopPropagation();
+                        div.remove();
+                        saveHistory();
+                    };
+                }
+                
+                historyList.appendChild(div);
+            });
+        } catch (e) {
+            console.error('Error loading history:', e);
+            localStorage.removeItem('calculatorHistory');
+        }
+    }
+}
+
+// Clear History
+function clearHistory() {
+    if (historyList.children.length > 0) {
+        if (confirm("Are you sure you want to clear all history?")) {
+            historyList.innerHTML = "";
+            localStorage.removeItem('calculatorHistory');
+            showSuccess("History cleared");
+        }
+    } else {
+        showError("History is already empty");
+    }
+}
+
+// Export History
+function exportHistory() {
+    if (historyList.children.length === 0) {
+        showError("No history to export");
+        return;
+    }
+    
+    const items = [];
+    historyList.querySelectorAll('.history-item').forEach(item => {
+        // Remove delete button from text
+        const itemText = item.cloneNode(true);
+        const deleteBtn = itemText.querySelector('span[style*="float: right"]');
+        if (deleteBtn) deleteBtn.remove();
+        items.push(itemText.textContent.trim());
+    });
+    
+    const blob = new Blob([items.join('\n')], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `calculator_history_${new Date().toISOString().slice(0, 10)}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    showSuccess("History exported");
+}
+
+/* ------------------------------------------------------
+   THEME SWITCH (Dark / Light)
+------------------------------------------------------ */
+const themeToggle = document.getElementById("themeToggle");
+
+themeToggle.onclick = () => {
+    document.body.classList.toggle("dark");
+    const isDark = document.body.classList.contains("dark");
+    themeToggle.textContent = isDark ? "☀️" : "🌙";
+    themeToggle.setAttribute("aria-label", isDark ? "Switch to light mode" : "Switch to dark mode");
+    
+    // Save theme preference
+    localStorage.setItem('calculatorTheme', isDark ? 'dark' : 'light');
+};
+
+// Load saved theme preference
+const savedTheme = localStorage.getItem('calculatorTheme');
+if (savedTheme === 'dark') {
+    document.body.classList.add('dark');
+    themeToggle.textContent = "☀️";
+    themeToggle.setAttribute("aria-label", "Switch to light mode");
+}
+
+/* ------------------------------------------------------
+   ADDITIONAL FEATURES
+------------------------------------------------------ */
+
+// Prevent context menu on calculator
+document.addEventListener('contextmenu', function(e) {
+    if (e.target.closest('.calculator-container')) {
+        e.preventDefault();
+    }
+});
+
+// Focus management for accessibility
+display.setAttribute('tabindex', '0');
+display.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        calculate();
+    }
+});
+</script>
+
+</body>
+</html>
